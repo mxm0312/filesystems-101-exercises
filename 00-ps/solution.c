@@ -10,10 +10,10 @@
 #include <string.h>
 
 #define BUF_SIZE 200
-#define ARG_MAX 131072
+#define READ_MAX 10000
 
-void envsHandler(char * args, int size, char * argv[ARG_MAX]);
-void argsHandler(char * args, int size, char * argv[ARG_MAX], int * argc);
+void envsHandler(char * args, int size, char * argv[READ_MAX]);
+void argsHandler(char * args, int size, char * argv[READ_MAX], int * argc);
 char * readFile(char * name, int * sz);
 
 
@@ -27,8 +27,8 @@ void ps(void)
         return;
     }
     
-    char **argv = calloc(ARG_MAX, sizeof(char*));
-    char **argp = calloc(ARG_MAX, sizeof(char*));
+    char **argv = calloc(READ_MAX, sizeof(char*));
+    char **argp = calloc(READ_MAX, sizeof(char*));
     
     struct dirent *d = NULL;
     
@@ -39,8 +39,8 @@ void ps(void)
         if (pid == 0) { continue; }
         
         char path[BUF_SIZE] = {0};
-        memset(argv, 0, ARG_MAX*sizeof(char*));
-        memset(argp, 0, ARG_MAX*sizeof(char*));
+        memset(argv, 0, READ_MAX*sizeof(char*));
+        memset(argp, 0, READ_MAX*sizeof(char*));
         
         int argc = 0;
         int count = 0;
@@ -125,7 +125,7 @@ char * readFile(char * name, int * sz) {
     return res;
 }
 
-void argsHandler(char *args, int size, char *argv[ARG_MAX], int *argc) {
+void argsHandler(char *args, int size, char *argv[READ_MAX], int *argc) {
     char *start = args;
     char *cur = start;
     int i = 0;
@@ -140,7 +140,7 @@ void argsHandler(char *args, int size, char *argv[ARG_MAX], int *argc) {
     *argc = i;
 }
 
-void envsHandler(char *args, int size, char *argv[ARG_MAX]) {
+void envsHandler(char *args, int size, char *argv[READ_MAX]) {
     char *start = args;
     char *cur = start;
     int i = 0;
