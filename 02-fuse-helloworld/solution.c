@@ -34,7 +34,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
         char out[1024] = {0}; /* с запасом */
         pid_t pid = fuse_get_context()->pid;
         snprintf(out, 1024, "hello, %d\n", pid); /* Вывод айдишников процессов */
-        len = strlen(buf);
+        len = strlen(out);
 
         if ((size_t) offset < len) {
             if ((size_t) offset + size > len) {
