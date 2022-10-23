@@ -39,9 +39,16 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 }
 
 static int hello_open(const char *path, struct fuse_file_info *fi) {
-        (void) path;
-        (void) fi;
-        return -EROFS;
+    
+    if (strcmp(path+1, file_name) != 0) {
+        return -ENOENT;
+    }
+     
+    if ((fi->flags & O_ACCMODE) != O_RDONLY) {
+        return -EACCES;
+    }
+
+    return 0;
 }
 
 static int hello_write(const char* req, const char *buf, size_t size,
@@ -50,6 +57,15 @@ static int hello_write(const char* req, const char *buf, size_t size,
     (void) buf;
     (void) size;
     (void) off;
+    (void) fi;
+    return -EROFS;
+}
+
+static int hello_write_buf(const char *path, struct fuse_bufvec *buf,
+                           off_t offset, struct fuse_file_info *fi) {
+    (void) path;
+    (void) buf;
+    (void) offset;
     (void) fi;
     return -EROFS;
 }
@@ -116,6 +132,7 @@ static const struct fuse_operations hellofs_ops = {
         .read = hello_read,
         .open = hello_open,
         .write = hello_write,
+        .write_buf = hello_write_buf,
         .getattr = hello_getattr,
         .readdir = hello_readdir,
         .create = hello_create,
