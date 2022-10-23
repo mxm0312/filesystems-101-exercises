@@ -22,7 +22,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
         }
 
         char out[1024]; /* с запасом */
-        int pid = fuse_get_context()->pid;
+        pid_t pid = fuse_get_context()->pid;
         sprintf(out, "hello, %d\n", pid); /* Вывод айдишников процессов */
         len = strlen(buf);
 
