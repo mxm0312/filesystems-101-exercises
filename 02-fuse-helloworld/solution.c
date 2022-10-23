@@ -12,6 +12,16 @@ char* file_name = "hello";
  
 /* Имплементация методов Fuse из документации */
 
+static void *hello_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
+    (void)conn;
+    cfg->uid = getuid();
+    cfg->gid = getgid();
+    cfg->set_uid = 1;
+    cfg->set_gid = 1;
+    cfg->kernel_cache = 1;
+    return NULL;
+}
+
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi) {
         size_t len;
@@ -23,7 +33,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
         char out[1024]; /* с запасом */
         pid_t pid = fuse_get_context()->pid;
-        sprintf(out, "hello, %d\n", pid); /* Вывод айдишников процессов */
+        sprintf(out, 1024, "hello, %d\n", pid); /* Вывод айдишников процессов */
         len = strlen(buf);
 
         if ((size_t) offset < len) {
@@ -129,6 +139,7 @@ static int hello_mknod(const char *path, mode_t mode, dev_t rdev) {
 }
 
 static const struct fuse_operations hellofs_ops = {
+        .init = hello_init,
         .read = hello_read,
         .open = hello_open,
         .write = hello_write,
