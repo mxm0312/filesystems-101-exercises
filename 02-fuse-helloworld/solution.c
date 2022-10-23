@@ -33,7 +33,7 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 
         char out[1024]; /* с запасом */
         pid_t pid = fuse_get_context()->pid;
-        sprintf(out, 1024, "hello, %d\n", pid); /* Вывод айдишников процессов */
+        snprintf(out, 1024, "hello, %d\n", pid); /* Вывод айдишников процессов */
         len = strlen(buf);
 
         if ((size_t) offset < len) {
