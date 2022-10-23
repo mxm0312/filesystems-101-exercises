@@ -51,11 +51,11 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
 static int hello_open(const char *path, struct fuse_file_info *fi) {
     
     if (strcmp(path+1, file_name) != 0) {
-        return -ENOENT;
+        return -EROFS;
     }
      
     if ((fi->flags & O_ACCMODE) != O_RDONLY) {
-        return -EACCES;
+        return -EROFS;
     }
 
     return 0;
