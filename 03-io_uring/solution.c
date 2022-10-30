@@ -12,6 +12,8 @@
 struct io_data {
     int read;
     int offset;
+    off_t first_offset;
+    size_t first_len;
     struct iovec iov;
 };
 
@@ -112,108 +114,116 @@ int copy(int in, int out)
     struct io_uring ring;
     unsigned long reads, writes;
     struct io_uring_cqe *cqe;
-    off_t write_left, offset;
+    off_t read_left, write_left, offset;
     int ret;
     
     ret = setup_context(QD, &ring);
     if (ret) {
-        return ret
+        return ret;
     }
     
     ret = get_file_size(in, &read_left)
     if (ret) {
-        return ret
+        return ret;
     }
     
     // имплементация как в документации
     
-    write_left = insize;
+    write_left = read_left;
     writes = reads = offset = 0;
 
-    while (insize || write_left) {
-        unsigned long had_reads;
+    while (read_left || write_left) {
         int got_comp;
-    
-        had_reads = reads;
-        while (insize) {
-            off_t this_size = insize;
+        
+            unsigned long before_reads = reads;
+            while (read_left) {
+                off_t cur_size = read_left;
 
-            if (reads + writes >= QD)
-                break;
-            if (this_size > BS)
-                this_size = BS;
-            else if (!this_size)
-                break;
+                if (reads + writes >= QD) {
+                    break;
+                }
+                if (cur_size > BS) {
+                    cur_size = BS;
+                } else if (!cur_size) {
+                    break;
+                }
 
-            if (queue_read(ring, this_size, offset, in))
-                break;
+                if (schedule_read(&ring, cur_size, offset, in)) {
+                    break;
+                }
 
-            insize -= this_size;
-            offset += this_size;
-            reads++;
-        }
-
-        if (had_reads != reads) {
-            ret = io_uring_submit(ring);
-            if (ret < 0) {
-               
-                break;
+                read_left -= cur_size;
+                offset += cur_size;
+                ++reads;
             }
-        }
 
-        got_comp = 0;
-        while (write_left) {
-            struct io_data *data;
-
-            if (!got_comp) {
-                ret = io_uring_wait_cqe(ring, &cqe);
-                got_comp = 1;
-            } else {
-                ret = io_uring_peek_cqe(ring, &cqe);
-                if (ret == -EAGAIN) {
-                    cqe = NULL;
-                    ret = 0;
+            if (before_reads != reads) {
+                if ((ret = io_uring_submit(&ring)) < 0) {
+                    return ret;
                 }
             }
-            if (ret < 0) {
-                
-                return 1;
-            }
-            if (!cqe)
-                break;
 
-            data = io_uring_cqe_get_data(cqe);
-            if (cqe->res < 0) {
-                if (cqe->res == -EAGAIN) {
-                    queue_prepped(ring, data, in, out);
-                    io_uring_submit(ring);
-                    io_uring_cqe_seen(ring, cqe);
+            got_comp = 0;
+            while (write_left) {
+                struct io_data* data;
+
+                if (!got_comp) {
+                    ret = io_uring_wait_cqe(&ring, &p_cqe);
+                    got_comp = 1;
+                } else {
+                    if ((ret = io_uring_peek_cqe(&ring, &p_cqe)) == -EAGAIN) {
+                        p_cqe = NULL;
+                        ret = 0;
+                    }
+                }
+                if (ret < 0) {
+                    return ret;
+                }
+                if (!p_cqe)
+                    break;
+
+                data = io_uring_cqe_get_data(p_cqe);
+                if (p_cqe->res < 0) {
+                    if (p_cqe->res == -EAGAIN) {
+                        reschedule(&ring, data, in, out, 0);
+                        io_uring_cqe_seen(&ring, p_cqe);
+                        continue;
+                    }
+                    return p_cqe->res;
+                } else if ((size_t) p_cqe->res != data->size) {
+                    /* Short read/write, adjust and requeue */
+                    reschedule(&ring, data, in, out, p_cqe->res);
+                    io_uring_cqe_seen(&ring, p_cqe);
                     continue;
                 }
-                
-                return 1;
-                
-            } else if ((size_t)cqe->res != data->iov.iov_len) {
-              
-                data->iov.iov_base += cqe->res;
-                data->iov.iov_len -= cqe->res;
-                data->offset += cqe->res;
-                queue_prepped(ring, data, in, out);
-                io_uring_submit(ring);
-                io_uring_cqe_seen(ring, cqe);
-                continue;
-            }
 
-        
-            if (data->read) {
-                queue_write(ring, data, in, out);
-                write_left -= data->first_len;
-                reads--;
-                writes++;
-            } else {
-                free(data);
-                writes--;
+                if (data->read) {
+                    schedule_write(&ring, data, out);
+                    write_left -= data->size;
+                    --reads;
+                    ++writes;
+                } else {
+                    free(data);
+                    --writes;
+                }
+                io_uring_cqe_seen(&ring, p_cqe);
             }
-            io_uring_cqe_seen(ring, cqe);
         }
+
+        while (writes) {
+            struct io_data* data;
+
+            if ((ret = io_uring_wait_cqe(&ring, &p_cqe))) {
+                return ret;
+            }
+            if (p_cqe->res < 0) {
+                return p_cqe->res;
+            }
+            data = io_uring_cqe_get_data(p_cqe);
+            free(data);
+            writes--;
+            io_uring_cqe_seen(&ring, p_cqe);
+        }
+
+        return 0;
 }
