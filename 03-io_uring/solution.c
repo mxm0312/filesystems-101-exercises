@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 #include <sys/stat.h>
 #include <liburing.h>
 #include <solution.h>
@@ -122,7 +123,7 @@ int copy(int in, int out)
         return ret;
     }
     
-    ret = get_file_size(in, &read_left)
+    ret = get_file_size(in, &read_left);
     if (ret) {
         return ret;
     }
@@ -148,7 +149,7 @@ int copy(int in, int out)
                     break;
                 }
 
-                if (schedule_read(&ring, cur_size, offset, in)) {
+                if (queue_read(&ring, cur_size, offset, in)) {
                     break;
                 }
 
@@ -185,21 +186,21 @@ int copy(int in, int out)
                 data = io_uring_cqe_get_data(p_cqe);
                 if (p_cqe->res < 0) {
                     if (p_cqe->res == -EAGAIN) {
-                        reschedule(&ring, data, in, out, 0);
+                        queue_prepped(ring, data, in, out);
                         io_uring_cqe_seen(&ring, p_cqe);
                         continue;
                     }
                     return p_cqe->res;
-                } else if ((size_t) p_cqe->res != data->size) {
-                    /* Short read/write, adjust and requeue */
-                    reschedule(&ring, data, in, out, p_cqe->res);
+                } else if ((size_t) p_cqe->res != data->first_len) {
+                   
+                    queue_prepped(ring, data, in, out);
                     io_uring_cqe_seen(&ring, p_cqe);
                     continue;
                 }
 
                 if (data->read) {
-                    schedule_write(&ring, data, out);
-                    write_left -= data->size;
+                    queue_write(ring, data, in, out);
+                    write_left -= data->first_len;
                     --reads;
                     ++writes;
                 } else {
