@@ -115,7 +115,7 @@ int copy(int in, int out)
     off_t write_left, offset;
     int ret;
     
-    ret = setup_context(QD, &ring, 0);
+    ret = setup_context(QD, &ring);
     if (ret) {
         return ret
     }
