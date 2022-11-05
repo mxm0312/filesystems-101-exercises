@@ -28,6 +28,7 @@ int read_direct(int img, int out, int block, int size) {
     if (write(out, buff, part) < part) {
         return -errno;
     }
+    free(buff);
     toRead -= part;
     return 0;
 }
@@ -41,6 +42,7 @@ int read_indirect(int img, int out, int block, int size) {
     numbuff = (int*) buff;
     for (uint i = 0; i < size / sizeof(int); ++i) {
         if (read_direct(img, out, numbuff[i], size) < 0) {
+            free(buff);
             return -errno;
         }
         
@@ -48,6 +50,7 @@ int read_indirect(int img, int out, int block, int size) {
             break;
         }
     }
+    free(buff);
     return 0;
 }
 
