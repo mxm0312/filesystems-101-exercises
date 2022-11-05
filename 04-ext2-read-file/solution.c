@@ -17,6 +17,7 @@ int read_direct(int img, int out, int block, int size) {
     int part;
     char *buff = malloc(sizeof(char) * size);
     if (pread(img, buff, size, block * size) < 0) {
+        free(buff);
         return -errno;
     }
     if (size >= toRead) {
@@ -26,6 +27,7 @@ int read_direct(int img, int out, int block, int size) {
         part = size;
     }
     if (write(out, buff, part) < part) {
+        free(buff);
         return -errno;
     }
     free(buff);
@@ -37,6 +39,7 @@ int read_indirect(int img, int out, int block, int size) {
     char *buff = malloc(sizeof(char) * size);
     int *numbuff;
     if (pread(img, buff, size, block * size) < 0) {
+        free(buff);
         return -errno;
     }
     numbuff = (int*) buff;
@@ -110,22 +113,22 @@ int dump_file(int img, int inode_nr, int out) {
         }
         else if (i == EXT2_DIND_BLOCK) {
             // double indirect
-            char buff[size];
-            int numbuff[size];
+            char *buff = malloc(sizeof(char) * size);
+            int *numbuff;
             if (pread(img, buff, size, inode.i_block[i] * size) < 0) {
                 return -errno;
             }
-            for (int i = 0; i < size; i++) {
-                numbuff[i] = (int)buff[i];
-            }
             for (uint i = 0; i < size / sizeof(int); i++) {
+                numbuff = (int*)buff;
                 if (read_indirect(img, out, numbuff[i], size) < 0) {
+                    free(buff);
                     return -errno;
                 }
                 if (toRead < 0) {
                     break;
                 }
             }
+            free(buff);
         }
     }
     return 0;
