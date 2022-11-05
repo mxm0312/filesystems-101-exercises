@@ -13,6 +13,25 @@ int block_size(struct ext2_super_block* super) {
     return 1024u << super->s_log_block_size;
 }
 
+int read_direct(int img, int out, int block, int size) {
+    int part;
+    char *buff = malloc(sizeof(char) * size);
+    if (pread(img, buff, size, block * size) < 0) {
+        return -errno;
+    }
+    if (size >= toRead) {
+        part = toRead;
+    }
+    else {
+        part = size;
+    }
+    if (write(out, buff, part) < part) {
+        return -errno;
+    }
+    toRead -= part;
+    return 0;
+}
+
 int read_indirect(int img, int out, int block, int size) {
     char buff = malloc(sizeof(char) * size);
     int *numbuff;
@@ -21,25 +40,9 @@ int read_indirect(int img, int out, int block, int size) {
     }
     numbuff = (int*) buff;
     for (uint i = 0; i < size / sizeof(int); ++i) {
-        
-        int part;
-        char buff_dir[size];
-        if (pread(img, buff_dir, size, numbuff[i] * size) < 0) {
+        if (read_direct(img, out, numbuff[i], size) < 0) {
             return -errno;
         }
-        
-        if (size >= toRead) {
-            part = toRead;
-        }
-        else {
-            part = size;
-        }
-        
-        if (write(out, buff_dir, part) < part) {
-            return -errno;
-        }
-        
-        toRead -= part;
         
         if (toRead < 0) {
             break;
