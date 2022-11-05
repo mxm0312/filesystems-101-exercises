@@ -15,7 +15,7 @@ int block_size(struct ext2_super_block* super) {
 
 int read_direct(int img, int out, int block, int size) {
     int part;
-    char buff[size];
+    char *buff = malloc(sizeof(char) * size);
     if (pread(img, buff, size, block * size) < 0) {
         return -errno;
     }
@@ -33,7 +33,7 @@ int read_direct(int img, int out, int block, int size) {
 }
 
 int read_indirect(int img, int out, int block, int size) {
-    char buff = malloc(sizeof(char) * size);
+    char *buff = malloc(sizeof(char) * size);
     int *numbuff;
     if (pread(img, buff, size, block * size) < 0) {
         return -errno;
