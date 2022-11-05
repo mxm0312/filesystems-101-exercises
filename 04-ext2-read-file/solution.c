@@ -22,7 +22,7 @@ int read_indirect(int img, int out, int block, int size) {
     for (int i = 0; i < size; i++) {
         numbuff[i] = (int)buff[i];
     }
-    for (int i = 0; i < size / sizeof(int); ++i) {
+    for (uint i = 0; i < size / sizeof(int); ++i) {
         
         int part;
         char buff[size];
@@ -114,7 +114,7 @@ int dump_file(int img, int inode_nr, int out) {
             for (int i = 0; i < size; i++) {
                 numbuff[i] = (int)buff[i];
             }
-            for (int i = 0; i < size / sizeof(int); i++) {
+            for (uint i = 0; i < size / sizeof(int); i++) {
                 if (read_indirect(img, out, numbuff[i], size) < 0) {
                     return -errno;
                 }
