@@ -16,7 +16,7 @@ int block_size(struct ext2_super_block* super) {
 int read_indirect(int img, int out, int block, int size) {
     char buff[size];
     int numbuff[size];
-    if (pread(img, &buff, size, block * size) < 0) {
+    if (pread(img, buff, size, block * size) < 0) {
         return -errno;
     }
     for (int i = 0; i < size; i++) {
@@ -25,8 +25,8 @@ int read_indirect(int img, int out, int block, int size) {
     for (uint i = 0; i < size / sizeof(int); ++i) {
         
         int part;
-        char buff[size];
-        if (pread(img, buff, size, numbuff[i] * size) < 0) {
+        char buff_dir[size];
+        if (pread(img, buff_dir, size, numbuff[i] * size) < 0) {
             return -errno;
         }
         
@@ -37,7 +37,7 @@ int read_indirect(int img, int out, int block, int size) {
             part = size;
         }
         
-        if (write(out, buff, part) < part) {
+        if (write(out, buff_dir, part) < part) {
             return -errno;
         }
         
@@ -108,7 +108,7 @@ int dump_file(int img, int inode_nr, int out) {
             // double indirect
             char buff[size];
             int numbuff[size];
-            if (pread(img, &buff, size, inode.i_block[i] * size) < 0) {
+            if (pread(img, buff, size, inode.i_block[i] * size) < 0) {
                 return -errno;
             }
             for (int i = 0; i < size; i++) {
