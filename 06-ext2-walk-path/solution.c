@@ -234,6 +234,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr, st
     uint32_t* block = malloc(size);
     
     if (pread(img, block, size, size * inode->i_block[EXT2_IND_BLOCK]) < 0) {
+        free(block);
         return -errno;
     }
     
@@ -246,6 +247,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr, st
         }
         
         if (!(to_read -= part)) {
+            free(block);
             return 0;
         }
         
@@ -284,6 +286,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr, st
             }
             
             if (!(to_read -= part)) {
+                free(d_block);
                 return 0;
             }
         }
