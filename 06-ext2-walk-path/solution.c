@@ -196,7 +196,7 @@ int dump_file(int img, const char* path, int out) {
     if (pread(img, &super, super_size, EXT2_TOP_OFFSET) < 0) {
         return -errno;
     }
-    int inode_nr = ind_inode(img, &super, 2, path);
+    int inode_nr = find_inode(img, &super, 2, path);
     if (inode_nr < 0) {
         return -errno;
     }
