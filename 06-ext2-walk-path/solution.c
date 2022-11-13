@@ -30,19 +30,20 @@ int read_block(int img, int out, size_t block, size_t size, size_t part) {
 
 int read_inode(int img, struct ext2_inode* inode, int inode_nr, struct ext2_super_block* super) {
     /* Once the block is identified, the local inode index for the local inode table can be identified using: */
-    int index = (inode_nr - 1) % super->s_inodes_per_group;
+    size_t index_inode = (inode_nr - 1) % super->s_inodes_per_group;
+    size_t desc_inx = (inode_nr - 1) / super->s_inodes_per_group;
     
     struct ext2_group_desc desc;
     // прочитать description
     int block_size = EXT2_BLOCK_SIZE(super);
         
-    size_t offset = (super->s_first_data_block + 1) * block_size + sizeof(struct ext2_group_desc) * index;
+    size_t offset = (super->s_first_data_block + 1) * block_size + sizeof(struct ext2_group_desc) * desc_inx;
         
     if (pread(img, &desc, sizeof(struct ext2_group_desc), offset) < 0) {
         return -errno;
     }
         
-    int pos = desc.bg_inode_table * block_size + index * super->s_inode_size;
+    int pos = desc.bg_inode_table * block_size + index_inode * super->s_inode_size;
     
     uint inode_size = sizeof(struct ext2_inode);
     
