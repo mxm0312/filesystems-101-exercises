@@ -186,7 +186,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, size_t block, const 
     return 0;
 }
 
-int copy_file(int img, int out, struct ext2_super_block* p_sb, int inode_nr) {
+int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     
     struct ext2_inode inode;
     
