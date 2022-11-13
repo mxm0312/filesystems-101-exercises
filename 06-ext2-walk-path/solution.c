@@ -293,11 +293,10 @@ int dump_file(int img, const char* path, int out) {
         return -errno;
     }
     int inode_nr = find_inode(img, &super, 2, path);
+    
     if (inode_nr < 0) {
         return inode_nr;
     }
-    
-    size_t size = EXT2_BLOCK_SIZE(&super);
     
     if (read_inode(img, &inode, inode_nr, &super) < 0) {
         return -errno;
