@@ -167,6 +167,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, size_t block, const 
         int inode = entry->inode;
         
         if (inode == 0) {
+            free(buff);
             return -ENOENT;
         }
         const char* next = path;
@@ -180,12 +181,14 @@ int find_inode_dir(int img, struct ext2_super_block* super, size_t block, const 
             int inode_nr = entry->inode;
             
             if (next[0] != '/') {
+                free(buff);
                 return inode_nr;
             }
             if (entry->file_type == EXT2_FT_DIR) {
+                free(buff);
                 return find_inode(img, super, inode_nr, next);
             }
-            
+            free(buff);
             return -ENOTDIR;
         }
         cp += entry->rec_len;
