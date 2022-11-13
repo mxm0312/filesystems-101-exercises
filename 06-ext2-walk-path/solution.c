@@ -186,17 +186,15 @@ int find_inode_dir(int img, struct ext2_super_block* super, size_t block, const 
     return 0;
 }
 
-int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
-    
-    struct ext2_inode inode;
+int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr, struct ext2_inode *inode) {
     
     size_t size = EXT2_BLOCK_SIZE(super);
     
-    if (read_inode(img, &inode, inode_nr, super) < 0) {
+    if (read_inode(img, inode, inode_nr, super) < 0) {
         return -errno;
     }
     
-    size_t to_read = inode.i_size;
+    size_t to_read = inode->i_size;
     
     // direct
     size_t part = 0;
@@ -210,7 +208,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
             part = to_read;
         }
         
-        if (read_block(img, out, inode.i_block[i], size, part) < 0) {
+        if (read_block(img, out, inode->i_block[i], size, part) < 0) {
           return -errno;
         }
         
@@ -224,7 +222,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     part = 0;
     uint32_t* block = malloc(size);
     
-    if (pread(img, block, size, size * inode.i_block[EXT2_IND_BLOCK]) < 0) {
+    if (pread(img, block, size, size * inode->i_block[EXT2_IND_BLOCK]) < 0) {
         return -errno;
     }
     
@@ -250,7 +248,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     size_t num = size / sizeof(int);
     uint32_t* d_block = malloc(2 * size);
     uint32_t* block_index = d_block + num;
-    if (pread(img, d_block, size, inode.i_block[EXT2_DIND_BLOCK] * size) < 0) {
+    if (pread(img, d_block, size, inode->i_block[EXT2_DIND_BLOCK] * size) < 0) {
         free(d_block);
         return -errno;
     }
@@ -287,6 +285,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
 int dump_file(int img, const char* path, int out) {
     
     struct ext2_super_block super;
+    struct ext2_inode inode;
     
     size_t super_size = sizeof(struct ext2_super_block);
     
@@ -304,7 +303,7 @@ int dump_file(int img, const char* path, int out) {
         return -errno;
     }
     
-    if (copy_file(img, out, &super, inode_nr) < 0) {
+    if (copy_file(img, out, &super, inode_nr, &inode) < 0) {
         return -errno;
     }
     
