@@ -225,7 +225,9 @@ int dump_file(int img, const char* path, int out) {
           return -errno;
         }
         
-        to_read -= part;
+        if (!(to_read -= part)) {
+            break;
+        }
     }
     
     // Single indirect
@@ -245,7 +247,9 @@ int dump_file(int img, const char* path, int out) {
           return -errno;
         }
         
-        to_read -= part;
+        if (!(to_read -= part)) {
+            break;
+        }
          
       }
     
@@ -281,7 +285,9 @@ int dump_file(int img, const char* path, int out) {
                 return -errno;
             }
             
-            to_read -= part;
+            if (!(to_read -= part)) {
+                break;
+            }
         }
     }
     
