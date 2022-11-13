@@ -19,7 +19,7 @@ int read_block(int img, int out, int block, int size, int part) {
     
     if (pread(img, buff, part, block * size) < 0) {
         return -errno;
-    }               
+    }
     
     if (write(out, buff, part) < 0) {
         return -errno;
@@ -67,7 +67,7 @@ int find_ind(int img, struct ext2_super_block* super, int block, const char* pat
         return -errno;
     }
     for (uint i = 0; i < size / sizeof(int); ++i) {
-        int res = find_inode_dir(img, super, buff[i], path)
+        int res = find_inode_dir(img, super, buff[i], path);
         if (res) {
             return res;
         }
@@ -161,7 +161,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, int block, const cha
         if (inode == 0) {
             return -ENOENT;
         }
-        char* next = path;
+        const char* next = path;
         while (*next && *next != '/') {
             ++next;
         }
@@ -193,15 +193,15 @@ int dump_file(int img, const char* path, int out) {
     
     uint super_size = sizeof(struct ext2_super_block);
     
-    if (pread(img, super, super_size, EXT2_TOP_OFFSET) < 0) {
+    if (pread(img, &super, super_size, EXT2_TOP_OFFSET) < 0) {
+        return -errno;
+    }
+    int inode_nr = ind_inode(img, &super, 2, path);
+    if (inode_nr < 0) {
         return -errno;
     }
     
-    if (find_inode(img, &super, 2, path) < 0) {
-        return -errno;
-    }
     size_t size = get_block_size(&super);
-    
     
     if (read_inode(img, &inode, inode_nr, &super) < 0) {
         return -errno;
@@ -222,7 +222,7 @@ int dump_file(int img, const char* path, int out) {
         }
         
         if (read_block(img, out, inode.i_block[i], size, part) < 0) {
-          return res;
+          return -errno;
         }
         
         if (!(to_read -= part)) {
@@ -281,7 +281,7 @@ int dump_file(int img, const char* path, int out) {
                 part = to_read;
             }
             
-            if (send_blk(img, out, block_index[j], size, part) < 0) {
+            if (read_block(img, out, block_index[j], size, part) < 0) {
                 free(d_block);
                 return -errno;
             }
