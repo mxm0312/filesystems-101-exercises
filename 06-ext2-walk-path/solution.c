@@ -190,9 +190,9 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     
     struct ext2_inode inode;
     
-    size_t size = EXT2_BLOCK_SIZE(&super);
+    size_t size = EXT2_BLOCK_SIZE(super);
     
-    if (read_inode(img, &inode, inode_nr, &super) < 0) {
+    if (read_inode(img, &inode, inode_nr, super) < 0) {
         return -errno;
     }
     
