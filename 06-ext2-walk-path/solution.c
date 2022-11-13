@@ -212,7 +212,7 @@ int dump_file(int img, const char* path, int out) {
     // direct
     size_t part = 0;
     
-    for (int i = 0; i < EXT2_NDIR_BLOCKS; ++i) {
+    for (size_t i = 0; i < EXT2_NDIR_BLOCKS; ++i) {
         
         if (to_read > size) {
             part = size;
