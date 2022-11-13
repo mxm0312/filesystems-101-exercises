@@ -34,7 +34,7 @@ int read_inode(int img, struct ext2_inode* inode, int inode_nr, struct ext2_supe
     
     struct ext2_group_desc desc;
     // прочитать description
-    int block_size = get_block_size(super);
+    int block_size = EXT2_BLOCK_SIZE(super);
         
     size_t offset = (super->s_first_data_block + 1) * block_size + sizeof(struct ext2_group_desc) * index;
         
@@ -56,7 +56,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, int block, const cha
 
 int find_ind(int img, struct ext2_super_block* super, int block, const char* path) {
     
-    int size = get_block_size(super);
+    int size = EXT2_BLOCK_SIZE(super);
     
     uint32_t* buff = malloc(size);
     
@@ -79,7 +79,7 @@ int find_ind(int img, struct ext2_super_block* super, int block, const char* pat
 
 int find_dind(int img, struct ext2_super_block* super, int block, const char* path) {
     
-    int block_size = get_block_size(super);
+    int block_size = EXT2_BLOCK_SIZE(super);
     uint32_t* dind = malloc(block_size);
     
     if (block == 0) {
@@ -142,7 +142,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, int block, const cha
         return -ENOENT;
     }
     
-    int size = get_block_size(super);
+    int size = EXT2_BLOCK_SIZE(super);
     
     char* buff = malloc(size);
     
@@ -201,7 +201,7 @@ int dump_file(int img, const char* path, int out) {
         return -errno;
     }
     
-    size_t size = get_block_size(&super);
+    size_t size = EXT2_BLOCK_SIZE(&super);
     
     if (read_inode(img, &inode, inode_nr, &super) < 0) {
         return -errno;
