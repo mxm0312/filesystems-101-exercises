@@ -191,14 +191,14 @@ int dump_file(int img, const char* path, int out) {
     struct ext2_super_block super;
     struct ext2_inode inode;
     
-    uint super_size = sizeof(struct ext2_super_block);
+    size_t super_size = sizeof(struct ext2_super_block);
     
     if (pread(img, &super, super_size, EXT2_TOP_OFFSET) < 0) {
         return -errno;
     }
     int inode_nr = find_inode(img, &super, 2, path);
     if (inode_nr < 0) {
-        return -errno;
+        return inode_nr;
     }
     
     size_t size = EXT2_BLOCK_SIZE(&super);
@@ -210,7 +210,7 @@ int dump_file(int img, const char* path, int out) {
     size_t to_read = inode.i_size;
     
     // direct
-    int part = 0;
+    size_t part = 0;
     
     for (int i = 0; i < EXT2_NDIR_BLOCKS; ++i) {
         
