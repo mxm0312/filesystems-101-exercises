@@ -62,14 +62,17 @@ int find_ind(int img, struct ext2_super_block* super, size_t block, const char* 
     uint32_t* buff = malloc(size);
     
     if (block == 0) {
+        free(buff);
         return -ENOENT;
     }
     else if (pread(img, buff, size, size * block) < 0) {
+        free(buff);
         return -errno;
     }
     for (uint i = 0; i < size / sizeof(int); ++i) {
         int res = find_inode_dir(img, super, buff[i], path);
         if (res) {
+            free(buff);
             return res;
         }
     }
@@ -84,15 +87,18 @@ int find_dind(int img, struct ext2_super_block* super, size_t block, const char*
     uint32_t* dind = malloc(block_size);
     
     if (block == 0) {
+        free(buff);
         return -ENOENT;
     }
     if (pread(img, dind, block_size, block_size * block) < 0) {
+        free(buff);
         return -errno;
     }
     
     for (uint i = 0; i < block_size / sizeof(int); ++i) {
         int res = 0;
         if ((res = find_ind(img, super, dind[i], path)) != 0) {
+            free(buff);
             return res;
         }
     }
@@ -148,6 +154,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, size_t block, const 
     char* buff = malloc(size);
     
     if (pread(img, buff, size, block * size) < 0) {
+        free(buff);
         return -errno;
     }
   
@@ -183,7 +190,7 @@ int find_inode_dir(int img, struct ext2_super_block* super, size_t block, const 
         }
         cp += entry->rec_len;
     }
-    
+    free(buff);
     return 0;
 }
 
