@@ -87,18 +87,18 @@ int find_dind(int img, struct ext2_super_block* super, size_t block, const char*
     uint32_t* dind = malloc(block_size);
     
     if (block == 0) {
-        free(buff);
+        free(dind);
         return -ENOENT;
     }
     if (pread(img, dind, block_size, block_size * block) < 0) {
-        free(buff);
+        free(dind);
         return -errno;
     }
     
     for (uint i = 0; i < block_size / sizeof(int); ++i) {
         int res = 0;
         if ((res = find_ind(img, super, dind[i], path)) != 0) {
-            free(buff);
+            free(dind);
             return res;
         }
     }
