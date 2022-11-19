@@ -26,6 +26,31 @@ int read_block(int img, int out, size_t block, size_t size, size_t part) {
     return 0;
 }
 
+int read_inode(int img, struct ext2_inode* inode, int inode_nr, struct ext2_super_block* super) {
+    /* Once the block is identified, the local inode index for the local inode table can be identified using: */
+    size_t index_inode = (inode_nr - 1) % super->s_inodes_per_group;
+    size_t desc_inx = (inode_nr - 1) / super->s_inodes_per_group;
+    
+    struct ext2_group_desc desc;
+    // прочитать description
+    int block_size = get_block_size(super);
+        
+    size_t offset = (super->s_first_data_block + 1) * block_size + sizeof(struct ext2_group_desc) * desc_inx;
+        
+    if (pread(img, &desc, sizeof(struct ext2_group_desc), offset) < 0) {
+        return -errno;
+    }
+        
+    int pos = desc.bg_inode_table * block_size + index_inode * super->s_inode_size;
+    
+    uint inode_size = sizeof(struct ext2_inode);
+    
+    if (pread(img, inode, inode_size, pos)) {
+        return -errno;
+    }
+    return 0;
+}
+
 int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     
     struct ext2_inode inode;
@@ -91,7 +116,7 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     
     part = 0;
     size_t num = size / sizeof(int);
-    uint32_t d_block = malloc(2 * size);
+    uint32_t *d_block = malloc(2 * size);
     
     if (pread(img, d_block, size, inode.i_block[EXT2_DIND_BLOCK] * size) < 0) {
         free(d_block);
@@ -130,32 +155,6 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
     return 0;
 }
 
-int read_inode(int img, struct ext2_inode* inode, int inode_nr, struct ext2_super_block* super) {
-    /* Once the block is identified, the local inode index for the local inode table can be identified using: */
-    size_t index_inode = (inode_nr - 1) % super->s_inodes_per_group;
-    size_t desc_inx = (inode_nr - 1) / super->s_inodes_per_group;
-    
-    struct ext2_group_desc desc;
-    // прочитать description
-    int block_size = get_block_size(super);
-        
-    size_t offset = (super->s_first_data_block + 1) * block_size + sizeof(struct ext2_group_desc) * desc_inx;
-        
-    if (pread(img, &desc, sizeof(struct ext2_group_desc), offset) < 0) {
-        return -errno;
-    }
-        
-    int pos = desc.bg_inode_table * block_size + index_inode * super->s_inode_size;
-    
-    uint inode_size = sizeof(struct ext2_inode);
-    
-    if (pread(img, inode, inode_size, pos)) {
-        return -errno;
-    }
-    return 0;
-}
-
-
 int dump_file(int img, int inode_nr, int out)
 {
     struct ext2_super_block super;
@@ -169,7 +168,7 @@ int dump_file(int img, int inode_nr, int out)
     else if (read_inode(img, &inode, inode_nr, &super) < 0) {
         return -errno;
     }
-    else if (copy_file(img, out, &super, inode_nr, &inode) < 0) {
+    else if (copy_file(img, out, &super, inode_nr) < 0) {
         return -errno;
     }
     
