@@ -110,8 +110,6 @@ int copy_file(int img, int out, struct ext2_super_block* super, int inode_nr) {
         
       }
     
-      free(block);
-    
     // Double indirect
     
     part = 0;
