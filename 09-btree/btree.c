@@ -4,7 +4,7 @@
 
 struct btree
 {
-    bool head;
+    bool not_initialized;
     int value;
     struct btree *left;
     struct btree *right;
@@ -32,7 +32,7 @@ struct btree* btree_alloc(unsigned int L)
     }
 
     struct btree *head = (struct btree *)malloc(node_size());
-    head->head = true; /* чтобы обработать случай, когда дерево пустое */
+    head->not_initialized = true; /* чтобы обработать случай, когда дерево пустое */
     head->left = btree_alloc(L/2);
     head->right = btree_alloc(L/2);
 
@@ -52,15 +52,14 @@ void btree_free(struct btree *t)
 
 void btree_insert(struct btree *t, int x)
 {
-    int value = t->value;
     
-    if (t->head == true) { /* fitst node case */
+    if (t->not_initialized == true) { /* fitst node case */
         t->value = x;
-        t->head = false;
+        t->not_initialized = false;
         return;
     }
     
-    if (x > value) {
+    if (x > t->value) {
         if (t->right == NULL) {
             struct btree *right = (struct btree*)malloc(node_size());
             right->value = x;
@@ -172,7 +171,7 @@ void inOrder(struct btree *node, struct btree_iter *iter) {
 
 struct btree_iter* btree_iter_start(struct btree *t)
 {
-    struct btree_iter *iter = malloc(sizeof(struct btree_iter));
+    struct btree_iter *iter = (struct btree_iter *)malloc(sizeof(struct btree_iter));
     iter->count = 0;
     
     inOrder(t, iter);
