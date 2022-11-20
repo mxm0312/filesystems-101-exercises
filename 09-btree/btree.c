@@ -64,20 +64,17 @@ void btree_insert(struct btree *t, int x)
         if (t->right == NULL) {
             struct btree *right = (struct btree*)malloc(node_size());
             right->not_initialized = false;
-            right->right = NULL;
-            right->left = NULL;
             right->value = x;
             t->right = right;
         } else {
             btree_insert(t->right, x); /* рекурсивное добавление вправо */
         }
+        return
     }
     if (x < t->value){
         if (t->right == NULL) {
             struct btree *left = (struct btree *)malloc(node_size());
             left->not_initialized = false;
-            left->right = NULL;
-            left->left = NULL;
             left->value = x;
             t->right = left;
         } else {
