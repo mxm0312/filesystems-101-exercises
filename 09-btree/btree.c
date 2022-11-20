@@ -145,6 +145,7 @@ bool btree_contains(struct btree *t, int x)
             return btree_contains(t->left, x);
         }
     }
+    return false;
 }
 
 struct btree_iter
