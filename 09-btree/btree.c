@@ -34,8 +34,8 @@ struct btree* btree_alloc(unsigned int L)
     struct btree *head = (struct btree *)malloc(node_size());
     head->not_initialized = true; /* чтобы обработать случай, когда дерево пустое */
     head->value = 0;
-    head->left = btree_alloc(L/2);
-    head->right = btree_alloc(L/2);
+    head->left = btree_alloc((L-1)/2);
+    head->right = btree_alloc((L-1)/2);
 
     return head;
 }
