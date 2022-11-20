@@ -130,7 +130,7 @@ bool btree_contains(struct btree *t, int x)
     } else {
         
         if (t->not_initialized) {
-            return false
+            return false;
         }
         
         int value = t->value;
