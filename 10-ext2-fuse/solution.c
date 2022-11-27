@@ -15,7 +15,7 @@ int get_block_size(struct ext2_super_block* super) {
 
 ssize_t read_super_block(int img, struct ext2_super_block* super_block) {
     size_t size = sizeof(struct ext2_super_block);
-    if (pread(img, super_block, super_block_size, EXT2_TOP_OFFSET) < 0) {
+    if (pread(img, super_block, size, EXT2_TOP_OFFSET) < 0) {
         return -errno;
     };
     return 0;
@@ -235,10 +235,10 @@ int ext2_img;
 struct ext2_super_block ext2_super;
 int toRead;
 
-static int ext2_fuse_getattr(const char *path, struct stat *p_stat, struct fuse_file_info *fi) {
+static int fuse_getattr(const char *path, struct stat *stat, struct fuse_file_info *fi) {
     (void)fi;
     size_t stat_size = sizeof(struct stat);
-    memset(p_stat, 0, stat_size);
+    memset(stat, 0, stat_size);
     
     int inode_nr;
     
@@ -252,7 +252,7 @@ static int ext2_fuse_getattr(const char *path, struct stat *p_stat, struct fuse_
         return -errno;
     }
     
-    stat->st_blksize = get_block_size(&ext2_sb);
+    stat->st_blksize = get_block_size(&ext2_super);
     stat->st_ino = inode_nr;
     stat->st_mode = inode.i_mode;
     stat->st_nlink = inode.i_links_count;
@@ -296,7 +296,7 @@ static const struct fuse_operations ext2_ops = {
 };
 
 int ext2fuse(int img, const char *mntp) {
-    ext2fuse_img = img;
+    ext2_img = img;
 
     char *argv[] = {"exercise", "-f", (char*) mntp, NULL};
     return fuse_main(3, argv, &ext2_ops, NULL);
