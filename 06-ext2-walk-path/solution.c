@@ -1,8 +1,6 @@
 #include <ext2fs/ext2fs.h>
-#include <linux/fs.h>
+#include <fuse.h>
 #include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <solution.h>
