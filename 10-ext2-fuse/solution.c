@@ -271,9 +271,7 @@ static int fuse_getattr(const char *path, struct stat *stat, struct fuse_file_in
 
 static int fuse_open(const char *path, struct fuse_file_info *fi) {
     
-    bool isAllowed = fi->flags & O_ACCMODE != O_RDONLY;
-    
-    if (isAllowed) {
+    if (fi->flags & O_ACCMODE != O_RDONLY) {
         return -EROFS;
     }
     
