@@ -231,8 +231,7 @@ static int fuse_mknod(const char *path, mode_t mode, dev_t rdev) {
     return -EROFS;
 }
 
-int ext2_img;
-struct ext2_super_block ext2_super;
+
 int toRead;
 
 static int fuse_getattr(const char *path, struct stat *stat, struct fuse_file_info *fi) {
