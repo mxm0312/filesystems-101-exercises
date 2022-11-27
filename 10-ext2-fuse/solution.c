@@ -2,6 +2,7 @@
 #include <fuse.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <solution.h>
 
@@ -276,7 +277,7 @@ static int fuse_open(const char *path, struct fuse_file_info *fi) {
         return -EROFS;
     }
     
-    if (find_inode(ext2_img, &ext2_sb, EXT2_ROOT_INO, path) < 0) {
+    if (find_inode(ext2_img, &ext2_super, EXT2_ROOT_INO, path) < 0) {
         return -ENOENT;
     }
     return 0;
